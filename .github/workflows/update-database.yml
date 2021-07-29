@@ -1,0 +1,64 @@
+name: Update Database
+
+on:
+  watch:
+    types: [started]
+  schedule:
+    - cron: 0 5 * * *
+
+jobs:
+  update:
+    if: github.event.repository.owner.id == github.event.sender.id
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set ENV
+      run: |
+        echo "RELEASE_NAME=Released on $(date +%Y%m%d)" >> $GITHUB_ENV
+        echo "TAG_NAME=$(date +%Y%m%d)" >> $GITHUB_ENV
+
+    - name: Checkout
+      uses: actions/checkout@master
+
+    - name: Set up Python
+      uses: actions/setup-python@master
+      with:
+        python-version: '3.8'
+
+    - name: Install requests
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Update
+      run: |
+        python update.py
+
+    - name: Commit
+      run: |
+        git config --global user.email action@github.com
+        git config --global user.name action
+        git add .
+        git commit -m "Successfully update" -a --allow-empty
+
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+    
+    - name: Gen Other Data Type
+      run: |
+        python genCSV.py
+
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      with:
+        name: ${{ env.RELEASE_NAME }}
+        tag_name: ${{ env.TAG_NAME }}
+        draft: false
+        prerelease: false
+        files: |
+          ./picture.db
+          ./picture.csv
