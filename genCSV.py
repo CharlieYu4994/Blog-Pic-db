@@ -3,6 +3,7 @@ import sqlite3
 def read_all(_table, _db):
     _cursor = _db.cursor()
     _ret = _cursor.execute(f"SELECT * FROM {_table}").fetchall()
+    _cursor.close()
     return _ret
 
 if __name__ == "__main__":
