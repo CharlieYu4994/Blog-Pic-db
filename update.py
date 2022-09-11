@@ -1,4 +1,5 @@
-import sqlite3, requests, json, time, re
+import sqlite3, requests, json, time
+from lxml import etree
 
 def add_line(_table, _date, _url, _db):
     _cursor = _db.cursor()
@@ -19,7 +20,6 @@ def update_bing(_db):
             add_line("bing", pic["enddate"], pic["urlbase"], _db)
 
 def update_apod(_db):
-    macher = re.compile(r"image/.*\..{3}")
     date = time.time()
     pics = list()
 
@@ -31,17 +31,19 @@ def update_apod(_db):
         if resp.status_code != 200:
             continue
 
-        url = macher.findall(resp.content.decode())
+        matcher = etree.HTML(resp.text)
+        url = matcher.xpath("//img/../@href")
+        del matcher
+
         if url == []:
             continue
 
         pics.append({
-            "url": url[1],
+            "url": url[0],
             "date": tmp
         })
     
     for pic in pics[::-1]:
-        print(pic)
         if not chk_line("apod", pic["date"], _db):
             add_line("apod", pic["date"], pic["url"], _db)
 
