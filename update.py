@@ -24,9 +24,8 @@ def update_apod(_db):
     pics = list()
 
     for _ in range(5):
-        date -= 3600*24
         tmp = time.strftime("%Y%m%d", time.localtime(date))
-
+        date -= 3600*24
         resp = requests.get(f"https://apod.nasa.gov/apod/ap{tmp[2:]}.html")
         if resp.status_code != 200:
             continue
